@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { claimsApi, adminApi } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import StatusBadge from '../components/StatusBadge';
@@ -17,17 +18,22 @@ const triggerEmoji = {
 
 export default function ClaimsPage() {
   const { isAdmin } = useAuth();
+  const toast = useToast();
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedClaim, setSelectedClaim] = useState(null);
   const [actionLoading, setActionLoading] = useState('');
+  // Capture admin status at mount time; role cannot change without a full re-login/logout.
+  const isAdminRef = useRef(isAdmin());
 
   useEffect(() => {
-    const fetchClaims = isAdmin()
+    const fetchClaims = isAdminRef.current
       ? adminApi.getClaims()
       : claimsApi.getMy();
     fetchClaims
       .then((res) => setClaims(res.data))
+      .catch((err) => setError(err.response?.data?.message || 'Failed to load claims'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -38,6 +44,10 @@ export default function ClaimsPage() {
       const res = await fn(claimId);
       setClaims((prev) => prev.map((c) => c.id === res.data.id ? res.data : c));
       if (selectedClaim?.id === claimId) setSelectedClaim(res.data);
+      const labels = { approve: 'approved', reject: 'rejected', paid: 'marked as paid' };
+      toast.success(`Claim ${labels[action]} successfully`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || `Failed to ${action} claim`);
     } finally {
       setActionLoading('');
     }
@@ -45,20 +55,28 @@ export default function ClaimsPage() {
 
   if (loading) return <div className="min-h-screen bg-gray-50"><Navbar /><Loader text="Loading claims..." /></div>;
 
+  const adminMode = isAdminRef.current;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">
-            {isAdmin() ? 'All Claims' : 'My Claims'}
+            {adminMode ? 'All Claims' : 'My Claims'}
           </h1>
           <p className="text-gray-500 text-sm mt-1">
             {claims.length} claims · {claims.filter((c) => c.claimStatus === 'APPROVED' || c.claimStatus === 'PAID').length} approved/paid
           </p>
         </div>
 
-        {claims.length === 0 ? (
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-6">
+            {error}
+          </div>
+        )}
+
+        {claims.length === 0 && !error ? (
           <EmptyState
             title="No claims found"
             subtitle="Claims are created automatically when disruption events occur in your zone."
@@ -70,7 +88,7 @@ export default function ClaimsPage() {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr className="text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
                     <th className="px-6 py-4">Claim</th>
-                    {isAdmin() && <th className="px-6 py-4">Worker</th>}
+                    {adminMode && <th className="px-6 py-4">Worker</th>}
                     <th className="px-6 py-4">Trigger</th>
                     <th className="px-6 py-4">Zone</th>
                     <th className="px-6 py-4">Date</th>
@@ -88,7 +106,7 @@ export default function ClaimsPage() {
                       onClick={() => setSelectedClaim(claim)}
                     >
                       <td className="px-6 py-4 font-medium text-gray-700">{claim.claimNumber}</td>
-                      {isAdmin() && (
+                      {adminMode && (
                         <td className="px-6 py-4 text-gray-600">{claim.userFullName}</td>
                       )}
                       <td className="px-6 py-4">
@@ -110,7 +128,7 @@ export default function ClaimsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {isAdmin() && (
+                        {adminMode && (
                           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                             {claim.claimStatus === 'UNDER_VALIDATION' && (
                               <>

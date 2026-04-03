@@ -40,7 +40,9 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-6">
-            {navLinks.map(({ to, label, icon: Icon }) => (
+            {navLinks.map(({ to, label, icon }) => {
+              const NavIcon = icon;
+              return (
               <Link
                 key={to}
                 to={to}
@@ -50,10 +52,11 @@ export default function Navbar() {
                     : 'text-gray-600 hover:text-blue-600'
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <NavIcon className="h-4 w-4" />
                 {label}
               </Link>
-            ))}
+              );
+            })}
 
             {isAuthenticated() ? (
               <div className="flex items-center gap-3">
@@ -97,17 +100,20 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="md:hidden py-4 border-t border-gray-100">
             <div className="flex flex-col gap-3">
-              {navLinks.map(({ to, label, icon: Icon }) => (
+              {navLinks.map(({ to, label, icon }) => {
+              const NavIcon = icon;
+              return (
                 <Link
                   key={to}
                   to={to}
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 text-sm font-medium text-gray-700 py-2"
                 >
-                  <Icon className="h-4 w-4" />
+                  <NavIcon className="h-4 w-4" />
                   {label}
                 </Link>
-              ))}
+              );
+            })}
               {isAuthenticated() ? (
                 <button
                   onClick={() => { handleLogout(); setMobileOpen(false); }}
