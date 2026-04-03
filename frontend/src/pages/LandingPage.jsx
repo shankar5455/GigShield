@@ -120,15 +120,18 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map(({ icon: Icon, title, desc, color, bg }) => (
+            {features.map(({ icon, title, desc, color, bg }) => {
+              const FeatureIcon = icon;
+              return (
               <div key={title} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                 <div className={`${bg} p-3 rounded-xl w-fit mb-4`}>
-                  <Icon className={`h-6 w-6 ${color}`} />
+                  <FeatureIcon className={`h-6 w-6 ${color}`} />
                 </div>
                 <h3 className="font-bold text-gray-800 mb-2">{title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

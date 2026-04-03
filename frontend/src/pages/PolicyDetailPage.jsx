@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Shield, Calendar, MapPin, RefreshCw, Pause, XCircle } from 'lucide-react';
 import { policyApi } from '../api';
+import { useToast } from '../context/ToastContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import StatusBadge from '../components/StatusBadge';
@@ -11,26 +12,50 @@ export default function PolicyDetailPage() {
   const { id } = useParams();
   const [policy, setPolicy] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState('');
   const navigate = useNavigate();
+  const toast = useToast();
 
   useEffect(() => {
     policyApi.getById(id)
       .then((res) => setPolicy(res.data))
+      .catch((err) => setError(err.response?.data?.message || 'Failed to load policy details'))
       .finally(() => setLoading(false));
   }, [id]);
 
   const handleAction = async (action) => {
     setActionLoading(action);
     try {
-      const res = await { renew: policyApi.renew, pause: policyApi.pause, deactivate: policyApi.deactivate }[action](id);
+      const fn = { renew: policyApi.renew, pause: policyApi.pause, deactivate: policyApi.deactivate }[action];
+      const res = await fn(id);
       setPolicy(res.data);
+      const labels = { renew: 'renewed', pause: 'paused', deactivate: 'deactivated' };
+      toast.success(`Policy ${labels[action]} successfully`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || `Failed to ${action} policy`);
     } finally {
       setActionLoading('');
     }
   };
 
   if (loading) return <div className="min-h-screen bg-gray-50"><Navbar /><Loader text="Loading policy..." /></div>;
+
+  if (error) return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8">
+        <button onClick={() => navigate(-1)} className="text-sm text-blue-600 hover:underline mb-6 block">
+          ← Back to Policies
+        </button>
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-6 py-4">
+          {error}
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+
   if (!policy) return null;
 
   return (

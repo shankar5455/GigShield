@@ -11,10 +11,12 @@ import EmptyState from '../components/EmptyState';
 export default function PoliciesPage() {
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     policyApi.getMy()
       .then((res) => setPolicies(res.data))
+      .catch((err) => setError(err.response?.data?.message || 'Failed to load policies'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -38,7 +40,13 @@ export default function PoliciesPage() {
           </Link>
         </div>
 
-        {policies.length === 0 ? (
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-6">
+            {error}
+          </div>
+        )}
+
+        {!error && policies.length === 0 ? (
           <EmptyState
             title="No policies yet"
             subtitle="Get your first policy to start income protection"

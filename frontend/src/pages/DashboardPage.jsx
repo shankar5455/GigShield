@@ -51,13 +51,6 @@ export default function DashboardPage() {
     { name: 'Rejected', value: claims.filter((c) => c.claimStatus === 'REJECTED').length },
   ].filter((d) => d.value > 0);
 
-  const triggerData = events.reduce((acc, e) => {
-    const existing = acc.find((i) => i.type === e.eventType);
-    if (existing) existing.count++;
-    else acc.push({ type: e.eventType?.replace('_', ' '), count: 1 });
-    return acc;
-  }, []);
-
   const eventEmoji = {
     HEAVY_RAIN: '🌧️',
     FLOOD_ALERT: '🌊',

@@ -20,6 +20,11 @@ export const premiumApi = {
   explain: (userId) => api.get(`/premium/explain/${userId}`),
 };
 
+export const userApi = {
+  getProfile: () => api.get('/users/profile'),
+  updateProfile: (data) => api.put('/users/profile', data),
+};
+
 export const claimsApi = {
   getMy: () => api.get('/claims/my'),
   getById: (id) => api.get(`/claims/${id}`),

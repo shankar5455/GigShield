@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { triggerApi } from '../api';
-import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import StatusBadge from '../components/StatusBadge';
@@ -24,7 +23,6 @@ const CITIES = [
 ];
 
 export default function TriggerMonitorPage() {
-  const { isAdmin } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTrigger, setSelectedTrigger] = useState(TRIGGER_TYPES[0]);
