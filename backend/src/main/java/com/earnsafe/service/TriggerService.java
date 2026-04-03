@@ -23,6 +23,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TriggerService {
 
+    // Parametric threshold constants used in the realtime feed simulation
+    private static final java.math.BigDecimal SIM_RAINFALL_MM  = new java.math.BigDecimal("40");
+    private static final java.math.BigDecimal SIM_TEMPERATURE  = new java.math.BigDecimal("44");
+    private static final int                  SIM_AQI          = 320;
+
     private final WeatherEventRepository weatherEventRepository;
     private final PolicyRepository policyRepository;
     private final UserRepository userRepository;
@@ -140,5 +145,54 @@ public class TriggerService {
     public List<ClaimResponse> processMockEventAndEvaluateAll(MockEventRequest request) {
         WeatherEvent event = createMockEvent(request);
         return evaluateAll(event);
+    }
+
+    /**
+     * Simulates a real-time trigger feed for all cities that have active policies.
+     * Cycles through all 5 parametric event types (HEAVY_RAIN, FLOOD_ALERT, HEATWAVE,
+     * POLLUTION_SPIKE, ZONE_CLOSURE) so each city experiences a different condition
+     * on each call. Claims are auto-created whenever thresholds are met.
+     */
+    public List<ClaimResponse> simulateRealtimeTriggerFeed() {
+        List<String> activeCities = policyRepository.findByStatus(Policy.PolicyStatus.ACTIVE)
+                .stream()
+                .map(p -> p.getUser() != null ? p.getUser().getCity() : null)
+                .filter(city -> city != null && !city.isBlank())
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+
+        if (activeCities.isEmpty()) {
+            log.info("[SimFeed] No active policies found – nothing to simulate.");
+            return java.util.Collections.emptyList();
+        }
+
+        String[] eventTypes  = {"HEAVY_RAIN", "FLOOD_ALERT", "HEATWAVE", "POLLUTION_SPIKE", "ZONE_CLOSURE"};
+        List<ClaimResponse> allClaims = new ArrayList<>();
+        int idx = java.time.LocalDateTime.now().getMinute() % eventTypes.length;
+
+        for (String city : activeCities) {
+            String eventType = eventTypes[idx % eventTypes.length];
+            idx++;
+
+            MockEventRequest req = new MockEventRequest();
+            req.setCity(city);
+            req.setZone(city);
+            req.setEventType(eventType);
+
+            switch (eventType) {
+                case "HEAVY_RAIN"      -> req.setRainfallMm(SIM_RAINFALL_MM);
+                case "FLOOD_ALERT"     -> req.setFloodAlert(true);
+                case "HEATWAVE"        -> req.setTemperature(SIM_TEMPERATURE);
+                case "POLLUTION_SPIKE" -> req.setAqi(SIM_AQI);
+                case "ZONE_CLOSURE"    -> req.setClosureAlert(true);
+            }
+
+            log.info("[SimFeed] Simulating {} in {}", eventType, city);
+            List<ClaimResponse> claims = processMockEventAndEvaluateAll(req);
+            allClaims.addAll(claims);
+        }
+
+        log.info("[SimFeed] Simulation complete – {} claim(s) auto-created.", allClaims.size());
+        return allClaims;
     }
 }

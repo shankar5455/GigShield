@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import StatusBadge from '../components/StatusBadge';
 import Loader from '../components/Loader';
-import { AlertTriangle, Zap, Play } from 'lucide-react';
+import { AlertTriangle, Zap, Play, Cpu } from 'lucide-react';
 
 const TRIGGER_TYPES = [
   { type: 'HEAVY_RAIN', emoji: '🌧️', label: 'Heavy Rain', defaults: { rainfallMm: 50, temperature: 28, aqi: 120, floodAlert: false, closureAlert: false } },
@@ -30,6 +30,8 @@ export default function TriggerMonitorPage() {
   const [zone, setZone] = useState('Kukatpally');
   const [firing, setFiring] = useState(false);
   const [result, setResult] = useState(null);
+  const [simulating, setSimulating] = useState(false);
+  const [simResult, setSimResult] = useState(null);
 
   const availableZones = CITIES.find((c) => c.city === city)?.zones || [];
 
@@ -38,6 +40,21 @@ export default function TriggerMonitorPage() {
       .then((res) => setEvents(res.data))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleSimulateFeed = async () => {
+    setSimulating(true);
+    setSimResult(null);
+    try {
+      const res = await triggerApi.simulateFeed();
+      setSimResult(res.data);
+      const evtRes = await triggerApi.getLive();
+      setEvents(evtRes.data);
+    } catch (err) {
+      setSimResult({ error: err.response?.data?.message || 'Simulation failed' });
+    } finally {
+      setSimulating(false);
+    }
+  };
 
   const handleFireTrigger = async () => {
     setFiring(true);
@@ -77,6 +94,56 @@ export default function TriggerMonitorPage() {
             Trigger Monitor
           </h1>
           <p className="text-gray-500 text-sm mt-1">Monitor live disruption events and simulate triggers for demo</p>
+        </div>
+
+        {/* Automated Realtime Feed Simulation */}
+        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Cpu className="h-5 w-5 text-indigo-500" />
+            <h2 className="font-bold text-indigo-800">⚡ Automated Trigger Feed — All Cities</h2>
+          </div>
+          <p className="text-indigo-700 text-sm mb-4">
+            Simulates the real-time parametric trigger engine across <strong>all cities with active policies</strong>.
+            Each city receives a different event type automatically. Claims are created where conditions match.
+          </p>
+          <button
+            onClick={handleSimulateFeed}
+            disabled={simulating}
+            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          >
+            <Cpu className="h-4 w-4" />
+            {simulating ? 'Running Feed Simulation...' : 'Run Realtime Trigger Feed'}
+          </button>
+          {simResult && (
+            <div className={`mt-4 rounded-xl p-4 ${simResult.error ? 'bg-red-50 border border-red-200' : 'bg-indigo-50 border border-indigo-200'}`}>
+              {simResult.error ? (
+                <p className="text-red-700 font-medium text-sm">❌ {simResult.error}</p>
+              ) : (
+                <div>
+                  <p className="text-indigo-800 font-bold mb-2">
+                    ✅ {simResult.message} — {simResult.triggeredClaims} claim(s) auto-created
+                  </p>
+                  {simResult.claims?.length > 0 && (
+                    <div className="space-y-2">
+                      {simResult.claims.map((c, i) => (
+                        <div key={i} className="bg-white rounded-lg p-3 text-sm flex items-center justify-between">
+                          <div>
+                            <span className="font-semibold text-gray-700">{c.claimNumber}</span>
+                            <span className="text-gray-500 ml-2">· {c.userFullName}</span>
+                            <span className="text-gray-400 ml-2 text-xs">{c.triggerType?.replace('_', ' ')}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-green-600 font-medium">Payout: ₹{c.payoutAmount?.toFixed(0)}</span>
+                            <StatusBadge status={c.claimStatus} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Demo Mode - Fire Trigger */}

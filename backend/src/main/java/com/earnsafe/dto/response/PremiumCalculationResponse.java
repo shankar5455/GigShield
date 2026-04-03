@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PremiumCalculationResponse {
+    private BigDecimal basePremium;
     private BigDecimal finalWeeklyPremium;
     private String riskScore;
     private List<BreakdownItem> breakdown;

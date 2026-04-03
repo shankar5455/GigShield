@@ -43,7 +43,7 @@ public class PolicyService {
                 .status(Policy.PolicyStatus.ACTIVE)
                 .riskScore(premium.getRiskScore())
                 .startDate(LocalDate.now())
-                .endDate(LocalDate.now().plusWeeks(4))
+                .endDate(LocalDate.now().plusWeeks(1))
                 .build();
 
         policy = policyRepository.save(policy);
@@ -69,7 +69,7 @@ public class PolicyService {
                 .orElseThrow(() -> new RuntimeException("Policy not found"));
         policy.setStatus(Policy.PolicyStatus.ACTIVE);
         policy.setStartDate(LocalDate.now());
-        policy.setEndDate(LocalDate.now().plusWeeks(4));
+        policy.setEndDate(LocalDate.now().plusWeeks(1));
         return mapToResponse(policyRepository.save(policy));
     }
 
