@@ -130,22 +130,36 @@ export default function BuyPolicyPage() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                {premium.breakdown?.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm">
-                    <span className="text-gray-500">{item.factor}</span>
-                    <span className={`font-medium ${item.amount < 0 ? 'text-green-600' : 'text-gray-700'}`}>
-                      {item.amount < 0 ? '-' : '+'}₹{Math.abs(item.amount)}
-                    </span>
-                  </div>
-                ))}
-                <div className="flex justify-between font-bold pt-2 border-t border-gray-100">
-                  <span>Base Weekly Premium</span>
-                  <span className="text-blue-600">₹{premium.finalWeeklyPremium}</span>
+                {premium.breakdown?.map((item, i) => {
+                  const amt = parseFloat(item.amount);
+                  const isBase = i === 0;
+                  const isDiscount = amt < 0;
+                  const colorClass = isDiscount ? 'text-green-600' : isBase ? 'text-gray-800' : 'text-red-500';
+                  const display = isBase ? `₹${Math.abs(amt)}` : `${isDiscount ? '-' : '+'}₹${Math.abs(amt)}`;
+                  return (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-gray-500">{item.factor}</span>
+                      <span className={`font-medium ${colorClass}`}>{display}</span>
+                    </div>
+                  );
+                })}
+                <div className="flex justify-between font-bold pt-2 border-t border-gray-200">
+                  <span className="text-gray-800">Weekly Premium</span>
+                  <span className="text-blue-600 text-lg">₹{premium.finalWeeklyPremium}</span>
                 </div>
               </div>
-              <div className="bg-blue-50 rounded-xl p-4 h-fit">
-                <p className="text-sm font-medium text-blue-700 mb-2">Risk Level: <span className="font-bold">{premium.riskScore}</span></p>
+              <div className="bg-blue-50 rounded-xl p-4 h-fit space-y-3">
+                <p className="text-sm font-medium text-blue-700">
+                  Risk Level: <span className={`font-bold ${premium.riskScore === 'HIGH' ? 'text-red-600' : premium.riskScore === 'LOW' ? 'text-green-600' : 'text-amber-600'}`}>{premium.riskScore}</span>
+                </p>
                 <p className="text-sm text-blue-600">{premium.explanation}</p>
+                {premium.basePremium && (
+                  <div className="bg-white rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-400 mb-1">Base weekly premium</p>
+                    <p className="font-bold text-2xl text-blue-700">₹{premium.basePremium}</p>
+                    <p className="text-xs text-gray-400">+ risk adjustments</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -161,7 +175,7 @@ export default function BuyPolicyPage() {
             {submitting ? 'Activating Policy...' : `Activate ${PLANS[selectedPlan].name}`}
           </button>
           <p className="text-xs text-gray-400 mt-3">
-            Policy activates immediately · Valid for 4 weeks · Cancel anytime
+            Policy activates immediately · Valid for 7 days · Cancel anytime
           </p>
         </div>
       </main>

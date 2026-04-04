@@ -229,6 +229,36 @@ const { data } = await policyApi.getMy();
 
 ## 9. Environment Variables & API Keys
 
+### Quick Setup
+
+1. Copy `.env.example` from the project root and create a `.env` file (or export the variables in your shell):
+
+```bash
+cp .env.example .env
+# Then edit .env and fill in DB_PASSWORD and JWT_SECRET
+```
+
+2. Run the backend with the environment variables set. Using your shell:
+
+```bash
+export DB_PASSWORD=your_mysql_password
+export JWT_SECRET=EarnSafe2026SecretKeyForJWTAuthenticationMustBeAtLeast256BitsLong
+export WEATHER_API_KEY=   # optional — mock events work without it
+cd backend && mvn spring-boot:run
+```
+
+Or with a `.env` loader such as `dotenv` / IntelliJ run configurations.
+
+### Required Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DB_USERNAME` | MySQL username (default: `root`) | No (defaults to `root`) |
+| `DB_PASSWORD` | MySQL password for `earnsafe_db` | **Yes** |
+| `JWT_SECRET` | ≥ 256-bit random string for JWT signing | **Yes** |
+| `WEATHER_API_KEY` | OpenWeatherMap API key | No (mock events work fine) |
+| `APP_SEED_ENABLED` | Seed demo data on first startup (`true`/`false`) | No (defaults to `true`) |
+
 ### Frontend — `frontend/.env`
 
 Only public-safe values belong here. Copy `frontend/.env.example` and fill in:
@@ -239,38 +269,6 @@ VITE_APP_NAME=EarnSafe
 ```
 
 > Do **not** store secret API keys (database passwords, JWT secrets, payment keys) in the frontend `.env`. Vite embeds all `VITE_` variables into the client bundle — they are visible to anyone who inspects the JavaScript.
-
-### Backend — `backend/.env` or `application.properties`
-
-All secrets live here. Copy `backend/.env.example` and fill in:
-
-```env
-DB_URL=jdbc:mysql://localhost:3306/earnsafe_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-DB_USERNAME=root
-DB_PASSWORD=your_mysql_password
-
-JWT_SECRET=replace_with_long_secure_random_string_at_least_256_bits
-JWT_EXPIRATION=86400000
-
-OPENWEATHER_API_KEY=your_openweather_api_key
-AQI_API_KEY=your_air_quality_api_key
-MAPS_API_KEY=your_maps_or_geocoding_key
-
-RAZORPAY_KEY_ID=your_test_key_id
-RAZORPAY_KEY_SECRET=your_test_key_secret
-```
-
-`application.properties` currently uses hardcoded values for the database and JWT secret. Before committing, migrate these to environment variable references:
-
-```properties
-spring.datasource.url=${DB_URL}
-spring.datasource.username=${DB_USERNAME}
-spring.datasource.password=${DB_PASSWORD}
-app.jwt.secret=${JWT_SECRET}
-app.jwt.expiration=${JWT_EXPIRATION:86400000}
-app.weather.api.key=${OPENWEATHER_API_KEY:}
-app.seed.enabled=${SEED_ENABLED:true}
-```
 
 > **Never commit `.env` files.** Both are listed in `.gitignore`. Only `.env.example` files (with placeholder values) should be committed.
 

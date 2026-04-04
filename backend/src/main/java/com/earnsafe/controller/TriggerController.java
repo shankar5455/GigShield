@@ -47,4 +47,14 @@ public class TriggerController {
                 "city", request.getCity()
         ));
     }
+
+    @PostMapping("/simulate-feed")
+    public ResponseEntity<Map<String, Object>> simulateRealtimeFeed() {
+        List<ClaimResponse> claims = triggerService.simulateRealtimeTriggerFeed();
+        return ResponseEntity.ok(Map.of(
+                "message", "Realtime trigger feed simulated for all active-policy cities",
+                "triggeredClaims", claims.size(),
+                "claims", claims
+        ));
+    }
 }

@@ -38,6 +38,7 @@ export const triggerApi = {
   createMockEvent: (data) => api.post('/triggers/mock-event', data),
   evaluateAll: (data) => api.post('/triggers/evaluate-all', data),
   evaluateForUser: (userId, data) => api.post(`/triggers/evaluate/${userId}`, data),
+  simulateFeed: () => api.post('/triggers/simulate-feed'),
 };
 
 export const adminApi = {

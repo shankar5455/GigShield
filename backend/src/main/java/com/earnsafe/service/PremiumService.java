@@ -124,6 +124,7 @@ public class PremiumService {
         }
 
         return PremiumCalculationResponse.builder()
+                .basePremium(BASE_PREMIUM)
                 .finalWeeklyPremium(total.setScale(2, RoundingMode.HALF_UP))
                 .riskScore(riskScore)
                 .breakdown(breakdown)
