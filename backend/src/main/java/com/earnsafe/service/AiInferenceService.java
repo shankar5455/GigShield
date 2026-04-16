@@ -47,6 +47,21 @@ public class AiInferenceService {
         return clamp01(number.doubleValue());
     }
 
+    public double predictRiskScore(double weatherSeverity, int recentClaims, double locationRisk) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("weatherSeverity", weatherSeverity);
+        payload.put("recentClaims90d", recentClaims);
+        payload.put("locationRisk", locationRisk);
+
+        Map<String, Object> response = post("/predict/risk", payload);
+        Object scoreObj = response.get("riskScore");
+        if (scoreObj == null) scoreObj = response.get("score");
+        if (!(scoreObj instanceof Number number)) {
+            throw new RuntimeException("AI service did not return riskScore");
+        }
+        return clamp01(number.doubleValue());
+    }
+
     public FraudService.FraudResult predictFraud(User user, WeatherEvent event, int claimsInLast24h, boolean duplicateClaim) {
         Map<String, Object> payload = userFeatures(user);
         payload.put("eventType", event.getEventType());

@@ -44,13 +44,7 @@ public class TriggerMonitoringService {
     public void runTriggerScan() {
         log.info("=== [AutoTrigger] Starting scheduled trigger scan at {} ===", LocalDateTime.now());
 
-<<<<<<< HEAD
-        // FIX: fetch active policies WITH user eagerly loaded
         List<Policy> activePolicies = policyRepository.findActivePoliciesWithUser();
-
-=======
-        List<Policy> activePolicies = policyRepository.findActivePoliciesWithUser();
->>>>>>> 84d46b715f50900d5fcf9292b90b3f41007422be
         if (activePolicies.isEmpty()) {
             log.info("[AutoTrigger] No active policies found. Skipping scan.");
             return;
@@ -115,25 +109,16 @@ public class TriggerMonitoringService {
         log.info("[AutoTrigger] Checking triggers for zone: {} (city: {})", zone, city);
 
         // Simulate realistic disruption conditions that breach parametric thresholds.
-<<<<<<< HEAD
-        // Later you can replace this with real OpenWeather API integration.
-        WeatherEvent event = buildSimulatedEvent(city);
-=======
         // In a production setup this data would come from a live weather/AQI API.
         WeatherEvent event = buildSimulatedEvent(zone, city);
->>>>>>> 84d46b715f50900d5fcf9292b90b3f41007422be
         weatherEventRepository.save(event);
 
         List<ClaimResponse> claims = triggerService.evaluatePoliciesForEvent(event);
 
         if (claims.isEmpty()) {
-<<<<<<< HEAD
-            log.info("[AutoTrigger] No disruption triggered for city: {}", city);
-        } else {
-            log.info("[AutoTrigger] {} claim(s) auto-created for city: {}", claims.size(), city);
-=======
             log.info("[AutoTrigger] No disruption triggered for zone: {}", zone);
->>>>>>> 84d46b715f50900d5fcf9292b90b3f41007422be
+        } else {
+            log.info("[AutoTrigger] {} claim(s) auto-created for zone: {}", claims.size(), zone);
         }
 
         return claims;
@@ -141,14 +126,9 @@ public class TriggerMonitoringService {
 
     /**
      * Builds a simulated weather event that meets parametric trigger thresholds.
-<<<<<<< HEAD
      * Rotates through HEAVY_RAIN → HEATWAVE → POLLUTION_SPIKE → FLOOD_ALERT → ZONE_CLOSURE
-     * every scheduler cycle based on the current minute.
-=======
-     * Rotates through HEAVY_RAIN → HEATWAVE → POLLUTION_SPIKE every scheduler cycle
      * based on the current minute, so different conditions are exercised over time.
      * city is set to the actual user/policy city; zone is the coverage zone used for grouping.
->>>>>>> 84d46b715f50900d5fcf9292b90b3f41007422be
      */
     private WeatherEvent buildSimulatedEvent(String zone, String city) {
         int minute = LocalDateTime.now().getMinute();
@@ -188,13 +168,8 @@ public class TriggerMonitoringService {
         }
 
         return WeatherEvent.builder()
-<<<<<<< HEAD
-                .city(city)
-                .zone(city) // for now same as city; later you can replace with actual zone
-=======
                 .city(city != null ? city : zone)
                 .zone(zone)
->>>>>>> 84d46b715f50900d5fcf9292b90b3f41007422be
                 .eventType(eventType)
                 .rainfallMm(rainfallMm)
                 .temperature(temperature)

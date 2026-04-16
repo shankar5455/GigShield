@@ -19,8 +19,7 @@ public class RiskService {
     private final AiInferenceService aiInferenceService;
 
     public double calculateRiskScore(double weatherSeverity, int claimHistory, double locationRisk) {
-        User syntheticUser = User.builder().build();
-        return aiInferenceService.predictRiskScore(syntheticUser, weatherSeverity, claimHistory, locationRisk);
+        return aiInferenceService.predictRiskScore(weatherSeverity, claimHistory, locationRisk);
     }
 
     public double calculateRiskScoreForUser(User user) {
