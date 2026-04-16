@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { claimsApi, adminApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
@@ -21,19 +21,18 @@ export default function ClaimsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedClaim, setSelectedClaim] = useState(null);
-  const isAdminRef = useRef(isAdmin());
+  const adminMode = isAdmin();
 
   useEffect(() => {
-    const fetchClaims = isAdminRef.current ? adminApi.getClaims() : claimsApi.getMy();
+    const fetchClaims = adminMode ? adminApi.getClaims() : claimsApi.getMy();
     fetchClaims
       .then((res) => setClaims(res.data))
       .catch((err) => setError(err.response?.data?.message || 'Failed to load claims'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [adminMode]);
 
   if (loading) return <div className="min-h-screen bg-gray-50"><Navbar /><Loader text="Loading claims..." /></div>;
 
-  const adminMode = isAdminRef.current;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
