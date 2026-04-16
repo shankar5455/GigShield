@@ -18,11 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Automatic parametric trigger monitoring service.
- * Runs on a fixed schedule, simulates weather condition checks per active-policy city,
- * and auto-creates claims when disruption thresholds are breached.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -34,23 +29,20 @@ public class TriggerMonitoringService {
 
     /**
      * Scheduled trigger scan – runs every app.trigger.interval ms (default 5 min).
-     *
-     * FIXED:
-     * - @Transactional keeps Hibernate session open
-     * - findActivePoliciesWithUser() avoids LazyInitializationException
      */
     @Transactional
     @Scheduled(fixedDelayString = "${app.trigger.interval:300000}")
     public void runTriggerScan() {
         log.info("=== [AutoTrigger] Starting scheduled trigger scan at {} ===", LocalDateTime.now());
 
+        // fetch active policies WITH user eagerly loaded
         List<Policy> activePolicies = policyRepository.findActivePoliciesWithUser();
         if (activePolicies.isEmpty()) {
             log.info("[AutoTrigger] No active policies found. Skipping scan.");
             return;
         }
 
-        // Group policies by zone (preferred: zoneCovered → user.zone → user.city)
+        // Group policies by zone
         Map<String, List<Policy>> byZone = activePolicies.stream()
                 .filter(p -> resolveZone(p) != null)
                 .collect(Collectors.groupingBy(this::resolveZone));
@@ -59,9 +51,11 @@ public class TriggerMonitoringService {
                 byZone.size(), byZone.keySet());
 
         int totalClaims = 0;
+
         for (Map.Entry<String, List<Policy>> entry : byZone.entrySet()) {
             String zone = entry.getKey();
             String city = resolveCity(entry.getValue());
+
             List<ClaimResponse> claims = evaluateZoneConditions(zone, city);
             totalClaims += claims.size();
         }
@@ -70,28 +64,30 @@ public class TriggerMonitoringService {
     }
 
     /**
-     * Resolves the zone key for a policy using the preferred fallback chain:
-     * policy.zoneCovered → user.zone → user.city.
+     * Resolve zone from policy → user.zone → user.city
      */
     private String resolveZone(Policy p) {
         if (p.getZoneCovered() != null && !p.getZoneCovered().isBlank()) {
             return p.getZoneCovered();
         }
+
         User user = p.getUser();
+
         if (user != null) {
             if (user.getZone() != null && !user.getZone().isBlank()) {
                 return user.getZone();
             }
+
             if (user.getCity() != null && !user.getCity().isBlank()) {
                 return user.getCity();
             }
         }
+
         return null;
     }
 
     /**
-     * Returns the actual city for a group of policies in the same zone.
-     * Uses the first policy whose user has a non-blank city.
+     * Get city from policies
      */
     private String resolveCity(List<Policy> policies) {
         return policies.stream()
@@ -102,8 +98,7 @@ public class TriggerMonitoringService {
     }
 
     /**
-     * Simulates weather condition checks for a given zone and triggers evaluation.
-     * Cycles through parametric event types so each scheduler run tests a different condition.
+     * Evaluate weather conditions and trigger claims
      */
     private List<ClaimResponse> evaluateZoneConditions(String zone, String city) {
         log.info("[AutoTrigger] Checking triggers for zone: {} (city: {})", zone, city);
@@ -140,21 +135,20 @@ public class TriggerMonitoringService {
         boolean floodAlert = false;
         boolean closureAlert = false;
 
-        // Rotate event type per 5-minute bucket (0–4)
         int bucket = (minute / 5) % 5;
 
         switch (bucket) {
             case 0 -> {
                 eventType = "HEAVY_RAIN";
-                rainfallMm = BigDecimal.valueOf(35.0); // threshold > 30
+                rainfallMm = BigDecimal.valueOf(35.0);
             }
             case 1 -> {
                 eventType = "HEATWAVE";
-                temperature = BigDecimal.valueOf(44.0); // threshold > 42
+                temperature = BigDecimal.valueOf(44.0);
             }
             case 2 -> {
                 eventType = "POLLUTION_SPIKE";
-                aqi = 320; // threshold > 300
+                aqi = 320;
             }
             case 3 -> {
                 eventType = "FLOOD_ALERT";

@@ -1,13 +1,14 @@
 package com.earnsafe.service;
 
 import com.earnsafe.dto.response.AdminDashboardResponse;
-import com.earnsafe.dto.response.ClaimResponse;
 import com.earnsafe.dto.response.PolicyResponse;
-import com.earnsafe.dto.response.UserResponse;
+
 import com.earnsafe.entity.Claim;
 import com.earnsafe.entity.Policy;
 import com.earnsafe.entity.RiskZone;
 import com.earnsafe.entity.User;
+import com.earnsafe.dto.response.UserResponse;
+import com.earnsafe.dto.response.ClaimResponse;
 import com.earnsafe.repository.ClaimRepository;
 import com.earnsafe.repository.PolicyRepository;
 import com.earnsafe.repository.RiskZoneRepository;
@@ -40,7 +41,9 @@ public class AdminService {
                 + claimRepository.countByClaimStatus(Claim.ClaimStatus.UNDER_REVIEW)
                 + claimRepository.countByClaimStatus(Claim.ClaimStatus.UNDER_VALIDATION);
         long fraudDetectedCount = claimRepository.countByFraudFlagTrue();
-        java.math.BigDecimal totalPayouts = claimRepository.sumPayoutAmountForPaidClaims();
+        java.math.BigDecimal totalPayouts = Optional.ofNullable(
+                claimRepository.sumPayoutAmountForPaidClaims(Claim.ClaimStatus.PAID)
+        ).orElse(java.math.BigDecimal.ZERO);
 
         // Trigger counts
         Map<String, Long> triggerCounts = new LinkedHashMap<>();
