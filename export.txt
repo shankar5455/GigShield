@@ -1,0 +1,5 @@
+export DB_PASSWORD=Shankar@4
+export JWT_SECRET=EarnSafeSuperSecureJWTKeyAtLeast256BitsLong123456
+export WEATHER_API_KEY=1fb52cc4dfc365cc18936baec9784c31
+export STRIPE_API_KEY=sk_test_your_real_key
+export STRIPE_DESTINATION_ACCOUNT=acct_your_real_id
